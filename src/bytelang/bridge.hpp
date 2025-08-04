@@ -8,12 +8,18 @@ namespace bytelang {
 namespace bridge {
 
 /// Ошибки обработки инструкций
-enum class InstructionError : rs::u32 {
+enum class Error : rs::u32 {
     /// Полученный код инструкции не соответствует ни одной инструкции.
     UnknownInstruction,
-    CodeReadError,
-};
+    /// Не удалось считать код инструкции
+    InstructionCodeReadFail,
 
+    // для применения в пользовательских инструкциях
+
+    /// Не удалось прочесть аргумент
+    InstructionArgumentReadFail,
+
+};
 
 /// Слушатель инструкций (Принимает код и аргументы)
 template<
@@ -29,10 +35,10 @@ public:
     core::InputStream in;
 
     /// Обработчики на приём
-    const std::function<void(core::InputStream &)> handlers[instructions_count];
+    const std::function<rs::Result<void, Error>(core::InputStream &)> handlers[instructions_count];
 
     /// Обновление (Пул проверки)
-    rs::Result<void, InstructionError> pull() {
+    rs::Result<void, Error> pull() {
         if (in.available() < sizeof(T)) {
             return {};
         }
@@ -40,16 +46,14 @@ public:
         auto code_option = in.read<T>();
 
         if (code_option.none()) {
-            return {InstructionError::CodeReadError};
+            return {Error::InstructionCodeReadFail};
         }
 
         if (code_option.value >= instructions_count) {
-            return {InstructionError::UnknownInstruction};
+            return {Error::UnknownInstruction};
         }
 
-        handlers[code_option.value](in);
-
-        return {};
+        return handlers[code_option.value](in);
     }
 
 public:
