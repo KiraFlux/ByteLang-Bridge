@@ -25,7 +25,7 @@
   "frameworks": "arduino",
   "platforms": "*",
   "dependencies": {
-    "JamahaW/Rustify-Lib": "^0.1.0"
+    "Rustify": "https://github.com/JamahaW/Rustify-Lib.git"
   },
   "export": {
     "include": "src/bytelang"
