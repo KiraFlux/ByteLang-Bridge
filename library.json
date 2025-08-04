@@ -1,6 +1,6 @@
 {
   "name": "ByteLang-Bridge-Lib",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "Structured command bridge protocol for embedded device communication",
   "keywords": [
     "bytelang",
@@ -29,14 +29,5 @@
   },
   "export": {
     "include": "src/bytelang"
-  },
-  "examples": [
-    {
-      "name": "Basic Example",
-      "base": "examples/basic",
-      "files": [
-        "src/main.cpp"
-      ]
-    }
-  ]
+  }
 }
