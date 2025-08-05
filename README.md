@@ -1,4 +1,4 @@
-# ByteLang-Bridge
+# ByteLang Bridge
 
 **Структурированный мост для embedded-коммуникации**
 
