@@ -1,4 +1,4 @@
-# ByteLang-Bridge-Lib
+# ByteLang-Bridge
 
 **Структурированный мост для embedded-коммуникации**
 
@@ -14,7 +14,7 @@
 
 ```ini
 lib_deps =
-    https://github.com/JamahaW/ByteLang-Bridge-Lib.git
+    https://github.com/JamahaW/ByteLang-Bridge.git
 ```
 
 ## Пример
@@ -30,7 +30,7 @@ using bytelang::core::OutputStream;
 using bytelang::bridge::Error;
 
 // обработчик на приём инструкций
-auto receiver = bytelang::bridge::Receiver<rs::u8, 3>{
+auto receiver = bytelang::bridge::Receiver<rs::u8, 2>{ // тип кода инструкции - u8, кол-во инструкций - 2
     .in = InputStream(Serial),
     .handlers = {
         /// 0x00 : set_led(state: u8)

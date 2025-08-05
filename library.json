@@ -1,6 +1,6 @@
 {
-  "name": "ByteLang-Bridge-Lib",
-  "version": "1.0.0",
+  "name": "ByteLang-Bridge",
+  "version": "1.0.2",
   "description": "Structured command bridge protocol for embedded device communication",
   "keywords": [
     "bytelang",
@@ -13,7 +13,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/JamahaW/ByteLang-Bridge-Lib.git"
+    "url": "https://github.com/JamahaW/ByteLang-Bridge.git"
   },
   "authors": [
     {
@@ -25,7 +25,7 @@
   "frameworks": "arduino",
   "platforms": "*",
   "dependencies": {
-    "Rustify": "https://github.com/JamahaW/Rustify-Lib.git"
+    "Rustify": "https://github.com/JamahaW/Rustify.git"
   },
   "export": {
     "include": "src/bytelang"
