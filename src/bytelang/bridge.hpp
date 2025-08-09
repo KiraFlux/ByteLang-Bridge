@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include "rs/Result.hpp"
 #include "bytelang/core/streams.hpp"
 
@@ -38,7 +39,7 @@ public:
     const std::function<rs::Result<void, Error>(core::InputStream &)> handlers[instructions_count];
 
     /// Обновление (Пул проверки)
-    rs::Result<void, Error> pull() {
+    rs::Result<void, Error> poll() {
         if (in.available() < sizeof(T)) {
             return {};
         }

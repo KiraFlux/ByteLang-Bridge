@@ -80,7 +80,7 @@ void sendIrDistSensors() {
 void setup() {}
 
 void loop() {
-    auto result = receiver.pull();
+    auto result = receiver.poll();
 
     if (result.fail()) {
         // ... сообщение об ошибке
