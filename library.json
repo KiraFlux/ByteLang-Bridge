@@ -1,6 +1,6 @@
 {
   "name": "ByteLang-Bridge",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Structured command bridge protocol for embedded device communication",
   "keywords": [
     "bytelang",
