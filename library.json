@@ -1,6 +1,6 @@
 {
   "name": "ByteLang-Bridge",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Structured command bridge protocol for embedded device communication",
   "keywords": [
     "bytelang",
@@ -13,11 +13,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/JamahaW/ByteLang-Bridge.git"
+    "url": "https://github.com/KiraFlux/ByteLang-Bridge.git"
   },
   "authors": [
     {
-      "name": "JamahaW",
+      "name": "KiraFlux",
       "email": "kiraflux@duck.com"
     }
   ],
@@ -25,7 +25,7 @@
   "frameworks": "arduino",
   "platforms": "*",
   "dependencies": {
-    "Rustify": "https://github.com/JamahaW/Rustify.git"
+    "Rustify": "https://github.com/KiraFlux/Rustify.git"
   },
   "export": {
     "include": "src/bytelang"

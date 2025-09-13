@@ -14,7 +14,7 @@
 
 ```ini
 lib_deps =
-    https://github.com/JamahaW/ByteLang-Bridge.git
+    https://github.com/KiraFlux/ByteLang-Bridge.git
 ```
 
 ## Пример
