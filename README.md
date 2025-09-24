@@ -1,95 +1,119 @@
 # ByteLang Bridge
 
-**Структурированный мост для embedded-коммуникации**
+Структурированный мост для embedded-коммуникации
 
-## Основные возможности
+## Установка
 
-- **Приём команд**: `Receiver<CodeType, instructions_count>`
-- **Отправка данных**: `Sender<CodeType>` + `Instruction`
-- **Бинарные потоки**: `InputStream` / `OutputStream`
-
-## Быстрый старт
-
-Добавьте в `platformio.ini`:
-
+**PlatformIO:**
 ```ini
-lib_deps =
+lib_deps = 
     https://github.com/KiraFlux/ByteLang-Bridge.git
 ```
 
-## Пример
+## Пример использования
 
 ```cpp
-#include "Arduino.h"
-#include "bytelang/bridge.hpp"
+#include <Arduino.h>
+#include <bytelang/bridge.hpp>
 
+using namespace bytelang::bridge;
 
-using bytelang::core::InputStream;
-using bytelang::core::OutputStream;
-
-using bytelang::bridge::Error;
-
-// обработчик на приём инструкций
-auto receiver = bytelang::bridge::Receiver<rs::u8, 2>{ // тип кода инструкции - u8, кол-во инструкций - 2
-    .in = InputStream(Serial),
-    .handlers = {
-        /// 0x00 : set_led(state: u8)
-        [](InputStream &serializer) -> rs::Result<void, Error> {
-            auto state = serializer.readByte();
-
-            if (state.none()) {
-                return {Error::InstructionArgumentReadFail};
+struct RobotBridge {
+    // Приёмник: 2 команды, код команды - uint8_t
+    Receiver<rs::u8, 2> receiver{
+        .in = core::InputStream{Serial},
+        .handlers = {
+            // Команда 0x00: set_led(state)
+            [](core::InputStream& in) -> rs::Result<void, Error> {
+                auto state = in.read<rs::u8>();
+                if (state.none()) return Error::InstructionArgumentReadFail;
+                digitalWrite(LED_BUILTIN, state.value());
+                return {};
+            },
+            // Команда 0x01: set_motors(left, right)
+            [](core::InputStream& in) -> rs::Result<void, Error> {
+                auto left = in.read<rs::u8>();
+                auto right = in.read<rs::u8>();
+                if (left.none() || right.none()) return Error::InstructionArgumentReadFail;
+                analogWrite(9, left.value());
+                analogWrite(10, right.value());
+                return {};
             }
-
-            // ...
-
+        }
+    };
+    
+    // Отправитель данных
+    Sender<rs::u8> sender{core::OutputStream{Serial}};
+    
+    // Инструкция для отправки данных
+    auto send_sensors = sender.createInstruction(
+        [](core::OutputStream& out) -> rs::Result<void, Error> {
+            if (!out.write(rs::u16(analogRead(A0)))) return Error::InstructionArgumentWriteFail;
             return {};
-        },
-
-        /// 0x01 : set_motors(left_pwm: u8, right_pwm: u8)
-        [](InputStream &serializer) -> rs::Result<void, Error> {
-            auto left = serializer.readByte();
-            auto right = serializer.readByte();
-
-            if (left.none() or right.none()) {
-                return {Error::InstructionArgumentReadFail};
-            }
-
-            // ... логика включения моторов
-
-            return {};
-        },
-    },
+        }
+    );
 };
 
-// отправитель инструкций
-auto sender = bytelang::bridge::Sender<rs::u8>(OutputStream(Serial));
+RobotBridge bridge;
 
-/// ir_sensors(distances_mm: [3]u16)
-const auto ir_dist_sensors = sender.createInstruction();
-
-void sendIrDistSensors() {
-    auto ser = ir_dist_sensors.begin();
-    if (ser.some()) {
-        ser.value->write(rs::u16(100));
-        ser.value->write(rs::u16(0));
-        ser.value->write(rs::u16(50));
-    }
+void setup() {
+    Serial.begin(115200);
+    pinMode(LED_BUILTIN, OUTPUT);
 }
 
-void setup() {}
-
 void loop() {
-    auto result = receiver.poll();
-
-    if (result.fail()) {
-        // ... сообщение об ошибке
-    }
-
-    delay(10);
+    bridge.receiver.poll();
+    delay(1);
 }
 ```
 
-## Лицензия
+## API
 
-MIT License - подробнее см. [LICENSE](LICENSE)
+### Receiver - приём команд
+```cpp
+// CodeType - тип кода команды (uint8_t, uint16_t)
+// count - количество поддерживаемых команд
+Receiver<CodeType, count> receiver{
+    .in = core::InputStream{stream},  // входной поток
+    .handlers = {handler1, handler2, ...}  // обработчики команд
+};
+
+// Опрос новых команд (вызывать в loop)
+auto result = receiver.poll();
+if (result.fail()) {
+    // обработка ошибки
+}
+```
+
+### Sender + Instruction - отправка данных
+```cpp
+Sender<CodeType> sender{core::OutputStream{stream}};
+
+// Создание инструкции отправки
+auto instruction = sender.createInstruction([](core::OutputStream& out) {
+    // сериализация данных
+    if (!out.write(data)) return Error::InstructionArgumentWriteFail;
+    return rs::Result<void, Error>{};
+});
+
+// Отправка инструкции
+instruction();
+```
+
+### Потоки ввода/вывода
+- `core::InputStream` - чтение данных: `read<T>()`, `readByte()`, `available()`
+- `core::OutputStream` - запись данных: `write(T)`, `writeByte()`
+
+## Коды ошибок
+
+| Ошибка                         | Значение                          |
+| ------------------------------ | --------------------------------- |
+| `UnknownInstruction`           | Неизвестный код команды           |
+| `InstructionCodeReadFail`      | Ошибка чтения кода команды        |
+| `InstructionCodeWriteFail`     | Ошибка записи кода команды        |
+| `InstructionSendHandlerIsNull` | Обработчик отправки не установлен |
+| `InstructionArgumentReadFail`  | Ошибка чтения аргумента команды   |
+| `InstructionArgumentWriteFail` | Ошибка записи аргумента команды   |
+
+## Лицензия
+MIT License
