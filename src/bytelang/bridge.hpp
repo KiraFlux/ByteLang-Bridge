@@ -39,16 +39,20 @@ template<
     /// Тип кода принимаемой инструкции
     typename T,
     /// Количество инструкций
-    rs::size instructions_count>
+    rs::size N>
 struct Receiver {
 
     /// Код инструкции на приём
     using Code = T;
+    /// Количество инструкций
+    static constexpr auto instruction_count = N;
+    /// Контейнер для таблицы инструкций
+    using InstructionTable = std::array<std::function<rs::Result<void, Error>(core::InputStream &)>, instruction_count>;
 
     /// Сериализатор
     core::InputStream in;
     /// Обработчики на приём
-    std::array<std::function<rs::Result<void, Error>(core::InputStream &)>, instructions_count> handlers;
+    InstructionTable handlers;
 
     /// Обновление (Пул проверки)
     rs::Result<void, Error> poll() {
@@ -57,7 +61,7 @@ struct Receiver {
         auto code_option = in.read<Code>();
 
         if (code_option.none()) { return {Error::InstructionCodeReadFail}; }
-        if (code_option.value >= instructions_count) { return {Error::UnknownInstruction}; }
+        if (code_option.value >= instruction_count) { return {Error::UnknownInstruction}; }
 
         return handlers[code_option.value](in);
     }
@@ -70,12 +74,13 @@ struct Receiver {
 template<
     /// Примитив кода инструкции
     typename T>
+// todo Args... / передаваемые аргументы
 struct Instruction {
 
     /// Код инструкции на отправку
     using Code = T;
     /// Обработчик вызова инструкции
-    using Handler = std::function<rs::Result<void, Error>(core::OutputStream &)>;
+    using Handler = std::function<rs::Result<void, Error>(core::OutputStream &)>;// + Args ...
 
 private:
     /// Сериализатор
@@ -86,8 +91,8 @@ private:
     const Code code;
 
 public:
-    Instruction(core::OutputStream &output_stream, Code code, const Handler &call_handler) :
-        out{output_stream}, handler{call_handler}, code{code} {}
+    Instruction(core::OutputStream &output_stream, Code code, Handler call_handler) :
+        out{output_stream}, handler{std::move(call_handler)}, code{code} {}
 
     /// Вызвать инструкцию
     rs::Result<void, Error> operator()() {
@@ -101,7 +106,7 @@ public:
             return {Error::InstructionSendHandlerIsNull};
         }
 
-        return handler(out);
+        return handler(out);// handler(out, args...) Надо передать аргументы.....
     }
 
     Instruction() = delete;
@@ -127,8 +132,9 @@ public:
         out{output_stream} {}
 
     /// Создать инструкцию отправки
-    Instruction<Code> createInstruction(const typename Instruction<Code>::Handler &handler) {
-        return Instruction<Code>{out, next_code++, handler};
+    // todo + Args
+    Instruction<Code> createInstruction(typename Instruction<Code>::Handler handler) {
+        return Instruction<Code>{out, next_code++, std::move(handler)};
     }
 };
 
