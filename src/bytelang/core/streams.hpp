@@ -6,29 +6,25 @@
 #include "rs/Option.hpp"
 
 
-namespace bytelang {
-namespace core {
-
+namespace bytelang::core {
 
 /// Входной поток (чтение данных)
 struct InputStream {
 
 private:
-
     Stream &stream;
 
 public:
-
     explicit InputStream(Stream &s) :
-        stream(s) {}
+        stream{s} {}
 
     /// Сколько байт доступно для чтения
-    rs::size available() {
+    [[nodiscard]] rs::size available() {
         return stream.available();
     }
 
     /// Прочитать один байт
-    rs::Option<rs::u8> readByte() {
+    [[nodiscard]] rs::Option<rs::u8> readByte() {
         const auto result = stream.read();
 
         if (result == -1) {
@@ -39,7 +35,7 @@ public:
     }
 
     /// Прочитать объект типа T
-    template<typename T> rs::Option<T> read() {
+    template<typename T> [[nodiscard]] rs::Option<T> read() {
         T value;
 
         rs::size bytes_read = stream.readBytes(
@@ -56,26 +52,29 @@ public:
 };
 
 /// Выходной поток (запись данных)
-class OutputStream {
+struct OutputStream {
+
+private:
     Stream &stream;
 
 public:
     explicit OutputStream(Stream &s) :
-        stream(s) {}
+        stream{s} {}
 
     /// Записать один байт
-    bool writeByte(rs::u8 byte) {
+    [[nodiscard]] bool writeByte(rs::u8 byte) {
         return stream.write(byte) == 1;
     }
 
+    /// Записать буфер
+    [[nodiscard]] bool write(const void *data, rs::size length) {
+        return length == stream.write(static_cast<const rs::u8 *>(data), length);
+    }
+
     /// Записать объект типа T
-    template<typename T> bool write(const T &value) {
-        return sizeof(T) != stream.write(
-            reinterpret_cast<const rs::u8 *>(&value),
-            sizeof(T)
-        );
+    template<typename T> [[nodiscard]] inline bool write(const T &value) {
+        return write(static_cast<const void *>(&value), sizeof(T));
     }
 };
 
-} // namespace core
-} // namespace bytelang
+} // namespace bytelang::core

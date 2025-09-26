@@ -7,8 +7,7 @@
 
 #include "bytelang/core/streams.hpp"
 
-namespace bytelang {
-namespace bridge {
+namespace bytelang::bridge {
 
 /// Ошибки обработки инструкций
 enum class Error : rs::u32 {
@@ -72,15 +71,15 @@ struct Receiver {
 
 /// Инструкция отправки
 template<
-    /// Примитив кода инструкции
-    typename T>
-// todo Args... / передаваемые аргументы
+    typename T,       ///< Примитив кода инструкции
+    typename... Args  ///< Сигнатура аргументов
+    >
 struct Instruction {
 
     /// Код инструкции на отправку
     using Code = T;
     /// Обработчик вызова инструкции
-    using Handler = std::function<rs::Result<void, Error>(core::OutputStream &)>;// + Args ...
+    using Handler = std::function<rs::Result<void, Error>(core::OutputStream &, Args...)>;
 
 private:
     /// Сериализатор
@@ -94,19 +93,22 @@ public:
     Instruction(core::OutputStream &output_stream, Code code, Handler call_handler) :
         out{output_stream}, handler{std::move(call_handler)}, code{code} {}
 
+    Instruction(Instruction &&other) noexcept :
+        out{other.out}, handler{std::move(other.handler)}, code{other.code} {}
+
     /// Вызвать инструкцию
-    rs::Result<void, Error> operator()() {
+    rs::Result<void, Error> operator()(Args... args) {
+        if (handler == nullptr) {
+            return {Error::InstructionSendHandlerIsNull};
+        }
+
         const bool write_ok = out.write(code);
 
         if (not write_ok) {
             return {Error::InstructionCodeWriteFail};
         }
 
-        if (handler == nullptr) {
-            return {Error::InstructionSendHandlerIsNull};
-        }
-
-        return handler(out);// handler(out, args...) Надо передать аргументы.....
+        return handler(out, args...);
     }
 
     Instruction() = delete;
@@ -132,11 +134,9 @@ public:
         out{output_stream} {}
 
     /// Создать инструкцию отправки
-    // todo + Args
-    Instruction<Code> createInstruction(typename Instruction<Code>::Handler handler) {
-        return Instruction<Code>{out, next_code++, std::move(handler)};
+    template<typename... Args> Instruction<Code, Args...> createInstruction(typename Instruction<Code, Args...>::Handler handler) {
+        return Instruction<Code, Args...>{out, next_code++, std::move(handler)};
     }
 };
 
-}// namespace bridge
-}// namespace bytelang
+}  // namespace bytelang::bridge
