@@ -2,10 +2,10 @@
 
 #include <array>
 #include <functional>
-
 #include <rs/Result.hpp>
 
 #include "bytelang/core/streams.hpp"
+
 
 namespace bytelang::bridge {
 
@@ -73,7 +73,7 @@ struct Receiver {
 template<
     typename T,       ///< Примитив кода инструкции
     typename... Args  ///< Сигнатура аргументов
-    >
+>
 struct Instruction {
 
     /// Код инструкции на отправку
@@ -93,7 +93,7 @@ public:
     Instruction(core::OutputStream &output_stream, Code code, Handler call_handler) :
         out{output_stream}, handler{std::move(call_handler)}, code{code} {}
 
-    Instruction(Instruction &&other) noexcept :
+    Instruction(Instruction &&other) noexcept:
         out{other.out}, handler{std::move(other.handler)}, code{other.code} {}
 
     /// Вызвать инструкцию

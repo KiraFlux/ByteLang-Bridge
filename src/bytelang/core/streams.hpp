@@ -1,9 +1,8 @@
 #pragma once
 
 #include <Stream.h>
-#include "rs/aliases.hpp"
-
-#include "rs/Option.hpp"
+#include <rs/aliases.hpp>
+#include <rs/Option.hpp>
 
 
 namespace bytelang::core {
